@@ -70,7 +70,7 @@ bool isNewSession;
 	sets up any globals need by the rest of the calls
 	(This might need the API key passed to it.. not sure)
 */
-void aichat_open();
+void aichat_open(STDSTR, STDSTR);
 
 /*
 	ends any current session and starts a new session using the given api_key for the session

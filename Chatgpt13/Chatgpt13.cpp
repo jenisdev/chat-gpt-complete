@@ -5,7 +5,7 @@ using namespace std;
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	aichat_open();
+	aichat_open("your_api_key", "gpt-3.5-turbo");
 	aichat_start_session(API_KEY.c_str());
 	
 	for (;;)
@@ -126,10 +126,10 @@ STDSTR escape_json(const std::string &s)
 	return o.str();
 }
 
-void aichat_open()
+void aichat_open(STDSTR _key, STDSTR _model)
 {
-	API_KEY = "your-key";
-	MODEL = "gpt-3.5-turbo";
+	API_KEY = _key;
+	MODEL = _model;
 	isNewSession = false;
 }
 
