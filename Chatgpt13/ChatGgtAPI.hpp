@@ -40,6 +40,7 @@ struct CHATGPT_RESULT
 	JSONOBJECT o;
 	STDSTR t;
 	STD_CHARVECTOR data;
+	bool isvalid;
 };
 
 STDSTR escape_json(const std::string &s);
@@ -61,7 +62,7 @@ public:
 
 // Global
 CHATGPT_API ChatGPT_OBJ;
-STDSTR API_KEY, MODEL;
+STDSTR API_KEY, MODEL, DEFAULT_KEY;
 LISTCONVERSATIONS hist_conver;
 LISTSESSIONS list_session;
 bool isNewSession;
@@ -97,3 +98,5 @@ void aichat_end_session();
 	closes and connections to openai and deallocates any session history, etc.
 */
 void aichat_close();
+
+bool apikey_validation(STDSTR);

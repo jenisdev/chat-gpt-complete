@@ -5,7 +5,8 @@ using namespace std;
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	aichat_open("your_api_key", "gpt-3.5-turbo");
+	DEFAULT_KEY = "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";
+	aichat_open(DEFAULT_KEY, "gpt-3.5-turbo");
 	aichat_start_session(API_KEY.c_str());
 	
 	for (;;)
@@ -15,22 +16,55 @@ int _tmain(int argc, _TCHAR* argv[])
 
 		std::getline(std::cin, prompt);
 
-		if (std::size_t pos = prompt.find("%session") != string::npos) {
+		if (std::size_t pos = prompt.find("%key") != string::npos) 
+		{
+			string new_api_key;
+			stringstream s(prompt);
+			string pref_session;
+			s >> pref_session;
+			if ((s >> std::ws).eof()) 
+			{
+				cout << "new_api_key empty!" << endl;
+			}
+			else
+			{
+				s >> new_api_key;
+				if (apikey_validation(new_api_key))
+				{
+					API_KEY = new_api_key;
+					isNewSession = true;
+					aichat_start_session(API_KEY.c_str());
+					cout << "Your API KEY is valid. You can start a new session with your key. Enjoy!" << endl;
+				}
+				else
+				{
+					cout << "Your API KEY is invalide. Please try again with another key. Or you can start a new session with default key now. Enjoy!" << endl;
+				}
+				continue;
+			}
+			continue;
+		}
+
+		if (std::size_t pos = prompt.find("%session") != string::npos) 
+		{
 			int session_num;
 			stringstream s(prompt);
 			string pref_session;
 			s >> pref_session;
 			// Restore the session
-			if (hist_conver.size() > 0) {
+			if (hist_conver.size() > 0) 
+			{
 				LISTCONVERSATIONS item_conv(hist_conver);
 				list_session.insert(list_session.end(), item_conv);
 				hist_conver.clear();
 				aichat_end_session();
 			}
 
-			if ((s >> std::ws).eof()) {
+			if ((s >> std::ws).eof()) 
+			{
 				cout << "Session " << list_session.size() + 1 << ":" << endl;
 				session_num = (int)list_session.size();
+				isNewSession = true;
 
 				for (int i = 0; i < list_session[session_num - 1].size(); ++i) {
 					cout << "Question: " << list_session[session_num - 1][i].question << endl;
@@ -40,13 +74,16 @@ int _tmain(int argc, _TCHAR* argv[])
 			else 
 			{
 				s >> session_num;
-				if (session_num > list_session.size() ) {
+				if (session_num > list_session.size() )
+				{
 					cout << "The number is invalid. Here are last conversations." << endl;
 					session_num = (int)list_session.size();
 				}
 
+				isNewSession = true;
 				cout << "Session " << session_num << ":" << endl;
-				for (int i = 0; i < list_session[session_num - 1].size(); ++i) {
+				for (int i = 0; i < list_session[session_num - 1].size(); ++i) 
+				{
 					cout << "Question: " << list_session[session_num - 1][i].question << endl;
 					cout << "Answer: " << list_session[session_num - 1][i].answer << endl;
 				}
@@ -57,17 +94,20 @@ int _tmain(int argc, _TCHAR* argv[])
 
 		if (prompt == "%all") {
 			// Restore the session
-			if (hist_conver.size() > 0) {
+			if (hist_conver.size() > 0)
+			{
 				LISTCONVERSATIONS item_conv(hist_conver);
 				list_session.insert(list_session.end(), item_conv);
 				hist_conver.clear();
 				aichat_end_session();
 			}
-
+			isNewSession = true;
 			int session_cnt = 0;
-			for (int i = 0; i < list_session.size(); ++i) {
+			for (int i = 0; i < list_session.size(); ++i)
+			{
 				cout << "Session " << ++session_cnt << endl;
-				for (int j = 0; j < list_session[i].size(); ++j){
+				for (int j = 0; j < list_session[i].size(); ++j)
+				{
 					cout << "Question: " << list_session[i][j].question << endl;
 					cout << "Answer: " << list_session[i][j].answer << endl;
 				}
@@ -78,7 +118,8 @@ int _tmain(int argc, _TCHAR* argv[])
 
 		if (prompt == "%") {
 			// Restore the session
-			if (hist_conver.size() > 0) {
+			if (hist_conver.size() > 0) 
+			{
 				LISTCONVERSATIONS item_conv(hist_conver);
 				list_session.insert(list_session.end(), item_conv);
 				hist_conver.clear();
@@ -90,6 +131,18 @@ int _tmain(int argc, _TCHAR* argv[])
 		if (prompt.empty()) {
 			aichat_close();
 			break;
+		}
+
+		if (isNewSession)
+		{
+			// Restore the session
+			if (hist_conver.size() > 0)
+			{
+				LISTCONVERSATIONS item_conv(hist_conver);
+				list_session.insert(list_session.end(), item_conv);
+				hist_conver.clear();
+				aichat_end_session();
+			}
 		}
 		RESPONSEOBJ res = aichat_prompts(prompt);
 
@@ -108,10 +161,25 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 }
 
+bool apikey_validation(STDSTR key)
+{
+	ChatGPT_OBJ.SetKey(key.c_str());
+	ChatGPT_OBJ.SetModel(MODEL.c_str());
+	STDSTR testRequest = R"({"role":"user", "content":"Hi"})";
+	RESPONSEOBJ res = ChatGPT_OBJ.Text(testRequest.c_str(), 0, MX_TOKENS);
+
+	if (!res.has_value()) 
+		return false;
+	auto& r = res.value();
+	
+	return r.isvalid;
+}
+
 STDSTR escape_json(const std::string &s)
 {
 	std::ostringstream o;
-	for (auto c = s.cbegin(); c != s.cend(); c++) {
+	for (auto c = s.cbegin(); c != s.cend(); c++)
+	{
 		switch (*c) {
 		case '\t': o << "\\t"; break;
 		case '"': o << "\\\""; break;
@@ -143,8 +211,10 @@ void aichat_start_session(const char* api_key)
 RESPONSEOBJ aichat_prompts(STDSTR prompt)
 {
 	string request_part = "";
-	if (!isNewSession) {
-		for (int i = 0; i < hist_conver.size(); ++i) {
+	if (!isNewSession) 
+	{
+		for (int i = 0; i < hist_conver.size(); ++i)
+		{
 			string question = hist_conver[i].question;
 			string answer = hist_conver[i].answer;
 
@@ -225,12 +295,16 @@ RESPONSEOBJ CHATGPT_API::Text(const char* prompt, int Temperature = 0, int max_t
 		CHATGPT_RESULT r;
 		r.o = jObject;
 
-		if (jObject.has<JSONOBJECT>("error"))
+		if (jObject.has<JSONOBJECT>("error")){
 			r.t = jObject.get<JSONOBJECT>("error").get<jsonxx::String>("message");
+			r.isvalid = false;
+		}
 		else {
 			auto& choices = jObject.get<JSONARRAY>("choices");
 			auto& choice0 = choices.get<JSONOBJECT>(0);
 			auto& message = choice0.get<JSONOBJECT>("message");
+
+			r.isvalid = true;
 			r.t = message.get<JSONSTRING>("content");
 		}
 
