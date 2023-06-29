@@ -5,7 +5,7 @@ using namespace std;
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	DEFAULT_KEY = "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";
+	DEFAULT_KEY = "your-key";
 	aichat_open(DEFAULT_KEY, "gpt-3.5-turbo");
 	aichat_start_session(API_KEY.c_str());
 	
