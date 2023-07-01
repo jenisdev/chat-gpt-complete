@@ -3,9 +3,9 @@
 
 using namespace std;
 
-int _tmain(int argc, _TCHAR* argv[])
+int _tmain()
 {
-	DEFAULT_KEY = "your-key";
+	DEFAULT_KEY = "your_key";
 	aichat_open(DEFAULT_KEY, "gpt-3.5-turbo");
 	aichat_start_session(API_KEY.c_str());
 	
@@ -166,7 +166,7 @@ bool apikey_validation(STDSTR key)
 	ChatGPT_OBJ.SetKey(key.c_str());
 	ChatGPT_OBJ.SetModel(MODEL.c_str());
 	STDSTR testRequest = R"({"role":"user", "content":"Hi"})";
-	RESPONSEOBJ res = ChatGPT_OBJ.Text(testRequest.c_str(), 0, MX_TOKENS);
+	RESPONSEOBJ res = ChatGPT_OBJ.Text(testRequest.c_str());
 
 	if (!res.has_value()) 
 		return false;
@@ -231,7 +231,7 @@ RESPONSEOBJ aichat_prompts(STDSTR prompt)
 		isNewSession = false;
 	}
 
-	RESPONSEOBJ res = ChatGPT_OBJ.Text(request_part.c_str(), 0, MX_TOKENS);
+	RESPONSEOBJ res = ChatGPT_OBJ.Text(request_part.c_str());
 
 	return res;
 }
@@ -266,7 +266,7 @@ STDWSTR CHATGPT_API::Bearer()
 	return auth;
 }
 
-RESPONSEOBJ CHATGPT_API::Text(const char* prompt, int Temperature = 0, int max_tokens = MX_TOKENS)
+RESPONSEOBJ CHATGPT_API::Text(const char* prompt)
 {
 	STD_CHARVECTOR data(_BUFFERSIZE);
 	sprintf_s(data.data(), _BUFFERSIZE,

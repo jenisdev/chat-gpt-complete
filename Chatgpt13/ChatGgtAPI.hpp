@@ -56,7 +56,7 @@ public:
 	void SetKey(const char*);
 	void SetModel(const char*);
 	STDWSTR Bearer();
-	RESPONSEOBJ Text(const char*, int, int);
+	RESPONSEOBJ Text(const char*);
 	~CHATGPT_API();
 };
 
