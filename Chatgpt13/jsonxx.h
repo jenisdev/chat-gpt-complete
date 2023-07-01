@@ -270,7 +270,8 @@ namespace jsonxx {
 					type_ = INVALID_;
 					break;
 				default:
-					JSONXX_ASSERT(!"not implemented");
+					// JSONXX_ASSERT(!"not implemented");
+					break;
 			}
 		}
 		template<typename T>
@@ -337,14 +338,14 @@ namespace jsonxx {
 
 	template <typename T>
 	T& Array::get(unsigned int i) {
-		JSONXX_ASSERT(i < size());
+		//JSONXX_ASSERT(i < size());
 		Value* v = values_.at(i);
 		return v->get<T>();
 	}
 
 	template <typename T>
 	const T& Array::get(unsigned int i) const {
-		JSONXX_ASSERT(i < size());
+		//JSONXX_ASSERT(i < size());
 		const Value* v = values_.at(i);
 		return v->get<T>();
 	}
@@ -368,13 +369,13 @@ namespace jsonxx {
 
 	template <typename T>
 	T& Object::get(const std::string& key) {
-		JSONXX_ASSERT(has<T>(key));
+		//JSONXX_ASSERT(has<T>(key));
 		return value_map_.find(key)->second->get<T>();
 	}
 
 	template <typename T>
 	const T& Object::get(const std::string& key) const {
-		JSONXX_ASSERT(has<T>(key));
+		//JSONXX_ASSERT(has<T>(key));
 		return value_map_.find(key)->second->get<T>();
 	}
 
@@ -435,61 +436,61 @@ namespace jsonxx {
 
 	template<>
 	inline bool& Value::get<Boolean>() {
-		JSONXX_ASSERT(is<Boolean>());
+		//JSONXX_ASSERT(is<Boolean>());
 		return bool_value_;
 	}
 
 	template<>
 	inline std::string& Value::get<String>() {
-		JSONXX_ASSERT(is<String>());
+		//JSONXX_ASSERT(is<String>());
 		return *string_value_;
 	}
 
 	template<>
 	inline Number& Value::get<Number>() {
-		JSONXX_ASSERT(is<Number>());
+		//JSONXX_ASSERT(is<Number>());
 		return number_value_;
 	}
 
 	template<>
 	inline Array& Value::get<Array>() {
-		JSONXX_ASSERT(is<Array>());
+		//JSONXX_ASSERT(is<Array>());
 		return *array_value_;
 	}
 
 	template<>
 	inline Object& Value::get<Object>() {
-		JSONXX_ASSERT(is<Object>());
+		//JSONXX_ASSERT(is<Object>());
 		return *object_value_;
 	}
 
 	template<>
 	inline const Boolean& Value::get<Boolean>() const {
-		JSONXX_ASSERT(is<Boolean>());
+		//JSONXX_ASSERT(is<Boolean>());
 		return bool_value_;
 	}
 
 	template<>
 	inline const String& Value::get<String>() const {
-		JSONXX_ASSERT(is<String>());
+		//JSONXX_ASSERT(is<String>());
 		return *string_value_;
 	}
 
 	template<>
 	inline const Number& Value::get<Number>() const {
-		JSONXX_ASSERT(is<Number>());
+		//JSONXX_ASSERT(is<Number>());
 		return number_value_;
 	}
 
 	template<>
 	inline const Array& Value::get<Array>() const {
-		JSONXX_ASSERT(is<Array>());
+		//JSONXX_ASSERT(is<Array>());
 		return *array_value_;
 	}
 
 	template<>
 	inline const Object& Value::get<Object>() const {
-		JSONXX_ASSERT(is<Object>());
+		//JSONXX_ASSERT(is<Object>());
 		return *object_value_;
 	}
 
@@ -581,7 +582,7 @@ namespace jsonxx {
 	inline bool parse_string(std::istream& input, String& value) {
 		char ch = '\0', delimiter = '"';
 		if (!match("\"", input)) {
-			if (Parser == Strict) {
+			if (const_condition(Parser == Strict)) {
 				return false;
 			}
 			delimiter = '\'';
@@ -717,7 +718,7 @@ namespace jsonxx {
 		if (match("null", input)) {
 			return true;
 		}
-		if (Parser == Strict) {
+		if (const_condition(Parser == Strict)) {
 			return false;
 		}
 		return (input.peek() == ',');
@@ -732,7 +733,7 @@ namespace jsonxx {
 	}
 
 	inline bool parse_comment(std::istream &input) {
-		if (Parser == Permissive)
+		if (const_condition(Parser == Permissive))
 			if (!input.eof() && input.peek() == '/')
 			{
 				char ch0(0);
@@ -789,9 +790,9 @@ namespace jsonxx {
 
 		do {
 			std::string key;
-			if (UnquotedKeys == Enabled) {
+			if (const_condition(UnquotedKeys == Enabled)) {
 				if (!parse_identifier(input, key)) {
-					if (Parser == Permissive) {
+					if (const_condition(Parser == Permissive)) {
 						if (input.peek() == '}')
 							break;
 					}
@@ -800,7 +801,7 @@ namespace jsonxx {
 			}
 			else {
 				if (!parse_string(input, key)) {
-					if (Parser == Permissive) {
+					if (const_condition(Parser == Permissive)) {
 						if (input.peek() == '}')
 							break;
 					}
@@ -1361,7 +1362,7 @@ namespace jsonxx {
 
 	inline std::string Object::xml(unsigned format, const std::string &header, const std::string &attrib) const {
 		using namespace xml;
-		JSONXX_ASSERT(format == jsonxx::JSONx || format == jsonxx::JXML || format == jsonxx::JXMLex || format == jsonxx::TaggedXML);
+		//JSONXX_ASSERT(format == jsonxx::JSONx || format == jsonxx::JXML || format == jsonxx::JXMLex || format == jsonxx::TaggedXML);
 
 		jsonxx::Value v;
 		v.object_value_ = const_cast<jsonxx::Object*>(this);
@@ -1388,7 +1389,7 @@ namespace jsonxx {
 
 	inline std::string Array::xml(unsigned format, const std::string &header, const std::string &attrib) const {
 		using namespace xml;
-		JSONXX_ASSERT(format == jsonxx::JSONx || format == jsonxx::JXML || format == jsonxx::JXMLex || format == jsonxx::TaggedXML);
+		//JSONXX_ASSERT(format == jsonxx::JSONx || format == jsonxx::JXML || format == jsonxx::JXMLex || format == jsonxx::TaggedXML);
 
 		jsonxx::Value v;
 		v.array_value_ = const_cast<jsonxx::Array*>(this);
@@ -1462,7 +1463,7 @@ namespace jsonxx {
 
 	inline std::string xml(std::istream &input, unsigned format) {
 		using namespace xml;
-		JSONXX_ASSERT(format == jsonxx::JSONx || format == jsonxx::JXML || format == jsonxx::JXMLex || format == jsonxx::TaggedXML);
+		//JSONXX_ASSERT(format == jsonxx::JSONx || format == jsonxx::JXML || format == jsonxx::JXMLex || format == jsonxx::TaggedXML);
 
 		// trim non-printable chars
 		for (char ch(0); !input.eof() && input.peek() <= 32;)
