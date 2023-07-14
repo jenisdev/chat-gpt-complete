@@ -11,7 +11,6 @@
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "wininet.lib")
 #include "jsonxx.h"
-#include "rest.h"
 #include "boost\optional.hpp"
 
 #define _BUFFERSIZE 10000
@@ -45,7 +44,7 @@ struct CHATGPT_RESULT
 
 STDSTR escape_json(const std::string &s);
 
-//STD_CHARVECTOR Fetch(const char*);
+STDSTR REST(STDSTR api_key, char* jsondata);
 
 class CHATGPT_API
 {
