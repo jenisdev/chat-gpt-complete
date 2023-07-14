@@ -5,7 +5,7 @@ using namespace std;
 
 int _tmain()
 {
-	DEFAULT_KEY = "your_key";
+	DEFAULT_KEY = "your_api_key";
 	aichat_open(DEFAULT_KEY, "gpt-3.5-turbo");
 	aichat_start_session(API_KEY.c_str());
 	
@@ -175,6 +175,102 @@ bool apikey_validation(STDSTR key)
 	return r.isvalid;
 }
 
+STDSTR REST(STDSTR api_key, char* jsondata)
+{
+	HINTERNET hSession = InternetOpen(
+		"REST",
+		INTERNET_OPEN_TYPE_DIRECT,
+		NULL,
+		NULL,
+		0);
+
+	HINTERNET hConnect = InternetConnect(
+		hSession,
+		"api.openai.com",
+		INTERNET_DEFAULT_HTTPS_PORT, // THIS
+		"",
+		"",
+		INTERNET_SERVICE_HTTP,
+		0,
+		0);
+
+	HINTERNET hHttpFile = HttpOpenRequest(
+		hConnect,
+		"POST",
+		"/v1/chat/completions",
+		NULL,
+		NULL,
+		NULL,
+		INTERNET_FLAG_SECURE, // THIS
+		0);
+
+	STDSTR bearHeader = "Authorization: Bearer " + api_key;
+
+	HttpAddRequestHeaders(
+		hHttpFile,
+		//"Authorization: Bearer your_api_key",
+		bearHeader.c_str(),
+		(DWORD)-1,
+		HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
+
+	HttpAddRequestHeaders(
+		hHttpFile, 
+		"Content-Type: application/json", 
+		(DWORD)-1, 
+		HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
+
+	char* JsonDATA = R"({"model": "gpt-3.5-turbo", "messages": [{"role": "system", "content": "You are a helpful assistant."}]})";
+	
+	while (!HttpSendRequest(hHttpFile, NULL, 0, jsondata, (DWORD)strlen(jsondata))) {
+		printf("HttpSendRequest error : (%lu)\n", GetLastError());
+		InternetErrorDlg(
+			GetDesktopWindow(),
+			hHttpFile,
+			ERROR_INTERNET_CLIENT_AUTH_CERT_NEEDED,
+			FLAGS_ERROR_UI_FILTER_FOR_ERRORS |
+			FLAGS_ERROR_UI_FLAGS_GENERATE_DATA |
+			FLAGS_ERROR_UI_FLAGS_CHANGE_OPTIONS,
+			NULL);
+	}
+
+
+	DWORD dwFileSize;
+	dwFileSize = BUFSIZ;
+
+	char* buffer;
+	buffer = new char[dwFileSize + 1];
+	STDSTR response = "";
+	while (true) {
+		DWORD dwBytesRead;
+		BOOL bRead;
+
+		bRead = InternetReadFile(
+			hHttpFile,
+			buffer,
+			dwFileSize + 1,
+			&dwBytesRead);
+
+		if (dwBytesRead == 0) break;
+		
+		if (!bRead) {
+			printf("InternetReadFile error : <%lu>\n", GetLastError());
+			response.append("");
+		}
+		else {
+			buffer[dwBytesRead] = 0;
+			//printf("Retrieved %lu data bytes: %s\n", dwBytesRead, buffer);
+			response.append(buffer);
+			//std::cout << response << std::endl;
+		}
+	}
+
+	InternetCloseHandle(hHttpFile);
+	InternetCloseHandle(hConnect);
+	InternetCloseHandle(hSession);
+
+	return response;
+}
+
 STDSTR escape_json(const std::string &s)
 {
 	std::ostringstream o;
@@ -269,24 +365,17 @@ STDWSTR CHATGPT_API::Bearer()
 RESPONSEOBJ CHATGPT_API::Text(const char* prompt)
 {
 	STD_CHARVECTOR data(_BUFFERSIZE);
+	char json_data[_BUFFERSIZE];
 	sprintf_s(data.data(), _BUFFERSIZE,
 		R"({"model": "%s", "messages": [{"role": "system", "content": "You are a helpful assistant."}, %s]})",
 		model.c_str(), prompt);
 	data.resize(strlen(data.data()));
-
+	sprintf_s(json_data, _BUFFERSIZE,
+		R"({"model": "%s", "messages": [{"role": "system", "content": "You are a helpful assistant."}, %s]})",
+		model.c_str(), prompt);
 	STDSTR str = data.data();
 
-	RESTAPI::REST hREST;
-	hREST.Connect(L"api.openai.com", true, 0, 0, 0, 0);
-	std::initializer_list<STDWSTR> hdrs = {
-		Bearer(),
-		L"Content-Type: application/json",
-	};
-	auto hInternetConnection = hREST.RequestWithBuffer(L"/v1/chat/completions", L"POST", hdrs, data.data(), data.size());
-
-	STD_CHARVECTOR hRESPONSE;
-	hREST.ReadToMemory(hInternetConnection, hRESPONSE);
-	hRESPONSE.resize(hRESPONSE.size() + 1);
+	STDSTR hRESPONSE = REST(APIKEY, json_data);
 
 	try
 	{
