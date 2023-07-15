@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "ChatGgtAPI.hpp"
 
 using namespace std;
@@ -208,7 +207,6 @@ STDSTR REST(STDSTR api_key, char* jsondata)
 
 	HttpAddRequestHeaders(
 		hHttpFile,
-		//"Authorization: Bearer your_api_key",
 		bearHeader.c_str(),
 		(DWORD)-1,
 		HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
