@@ -216,8 +216,6 @@ STDSTR REST(STDSTR api_key, char* jsondata)
 		"Content-Type: application/json", 
 		(DWORD)-1, 
 		HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
-
-	char* JsonDATA = R"({"model": "gpt-3.5-turbo", "messages": [{"role": "system", "content": "You are a helpful assistant."}]})";
 	
 	while (!HttpSendRequest(hHttpFile, NULL, 0, jsondata, (DWORD)strlen(jsondata))) {
 		printf("HttpSendRequest error : (%lu)\n", GetLastError());
@@ -238,7 +236,8 @@ STDSTR REST(STDSTR api_key, char* jsondata)
 	char* buffer;
 	buffer = new char[dwFileSize + 1];
 	STDSTR response = "";
-	while (true) {
+	for (;;)
+	{
 		DWORD dwBytesRead;
 		BOOL bRead;
 
