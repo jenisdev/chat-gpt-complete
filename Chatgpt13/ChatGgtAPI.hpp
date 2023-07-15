@@ -2,6 +2,9 @@
 #include <sstream>
 #include <Windows.h>
 #include <WinInet.h>
+#include <SDKDDKVer.h>
+#include <stdio.h>
+#include <tchar.h>
 #include <vector>
 #include <algorithm>
 #include <string>
