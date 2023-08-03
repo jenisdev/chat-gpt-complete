@@ -65,7 +65,7 @@ int _tmain()
 				session_num = (int)list_session.size();
 				isNewSession = true;
 
-				for (int i = 0; i < list_session[session_num - 1].size(); ++i) {
+				for (int i = 0; i < (int)list_session[session_num - 1].size(); ++i) {
 					cout << "Question: " << list_session[session_num - 1][i].question << endl;
 					cout << "Answer: " << list_session[session_num - 1][i].answer << endl;
 				}
@@ -73,7 +73,7 @@ int _tmain()
 			else 
 			{
 				s >> session_num;
-				if (session_num > list_session.size() )
+				if (session_num >(int)list_session.size())
 				{
 					cout << "The number is invalid. Here are last conversations." << endl;
 					session_num = (int)list_session.size();
@@ -81,7 +81,7 @@ int _tmain()
 
 				isNewSession = true;
 				cout << "Session " << session_num << ":" << endl;
-				for (int i = 0; i < list_session[session_num - 1].size(); ++i) 
+				for (int i = 0; i < (int)list_session[session_num - 1].size(); ++i)
 				{
 					cout << "Question: " << list_session[session_num - 1][i].question << endl;
 					cout << "Answer: " << list_session[session_num - 1][i].answer << endl;
@@ -102,10 +102,10 @@ int _tmain()
 			}
 			isNewSession = true;
 			int session_cnt = 0;
-			for (int i = 0; i < list_session.size(); ++i)
+			for (int i = 0; i < (int)list_session.size(); ++i)
 			{
 				cout << "Session " << ++session_cnt << endl;
-				for (int j = 0; j < list_session[i].size(); ++j)
+				for (int j = 0; j < (int)list_session[i].size(); ++j)
 				{
 					cout << "Question: " << list_session[i][j].question << endl;
 					cout << "Answer: " << list_session[i][j].answer << endl;
@@ -176,12 +176,26 @@ bool apikey_validation(STDSTR key)
 
 STDSTR REST(STDSTR api_key, char* jsondata)
 {
+	STDSTR response = "";
+
 	HINTERNET hSession = InternetOpen(
 		"REST",
 		INTERNET_OPEN_TYPE_DIRECT,
 		NULL,
 		NULL,
 		0);
+
+	if (hSession == NULL)
+	{
+		std::cout << "InternetOpenA error :" << ::GetLastError() << std::endl;
+		return false;
+	}
+
+	DWORD dwTimeout = 60000;
+	DWORD dwRetries = 10;
+
+	InternetSetOption(hSession, INTERNET_OPTION_CONNECT_TIMEOUT, &dwTimeout, sizeof(DWORD));
+	InternetSetOption(hSession, INTERNET_OPTION_CONNECT_RETRIES, &dwRetries, sizeof(DWORD));
 
 	HINTERNET hConnect = InternetConnect(
 		hSession,
@@ -192,6 +206,9 @@ STDSTR REST(STDSTR api_key, char* jsondata)
 		INTERNET_SERVICE_HTTP,
 		0,
 		0);
+	
+	if (hSession == NULL || hConnect == NULL)
+		return NETWORK_DISCONNECTED;
 
 	HINTERNET hHttpFile = HttpOpenRequest(
 		hConnect,
@@ -217,8 +234,11 @@ STDSTR REST(STDSTR api_key, char* jsondata)
 		(DWORD)-1, 
 		HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE);
 	
+	DWORD startTime = GetTickCount();
+	DWORD currentTime = 0;
 	while (!HttpSendRequest(hHttpFile, NULL, 0, jsondata, (DWORD)strlen(jsondata))) {
-		printf("HttpSendRequest error : (%lu)\n", GetLastError());
+		currentTime = GetTickCount();
+//		printf("HttpSendRequest error : (%lu)\n", GetLastError());
 		InternetErrorDlg(
 			GetDesktopWindow(),
 			hHttpFile,
@@ -227,6 +247,8 @@ STDSTR REST(STDSTR api_key, char* jsondata)
 			FLAGS_ERROR_UI_FLAGS_GENERATE_DATA |
 			FLAGS_ERROR_UI_FLAGS_CHANGE_OPTIONS,
 			NULL);
+		if (currentTime - startTime > 60000)
+			return NETWORK_DISCONNECTED;
 	}
 
 
@@ -235,7 +257,7 @@ STDSTR REST(STDSTR api_key, char* jsondata)
 
 	char* buffer;
 	buffer = new char[dwFileSize + 1];
-	STDSTR response = "";
+	
 	for (;;)
 	{
 		DWORD dwBytesRead;
@@ -255,9 +277,7 @@ STDSTR REST(STDSTR api_key, char* jsondata)
 		}
 		else {
 			buffer[dwBytesRead] = 0;
-			//printf("Retrieved %lu data bytes: %s\n", dwBytesRead, buffer);
 			response.append(buffer);
-			//std::cout << response << std::endl;
 		}
 	}
 
@@ -306,7 +326,7 @@ RESPONSEOBJ aichat_prompts(STDSTR prompt)
 	string request_part = "";
 	if (!isNewSession) 
 	{
-		for (int i = 0; i < hist_conver.size(); ++i)
+		for (int i = 0; i < (int)hist_conver.size(); ++i)
 		{
 			string question = hist_conver[i].question;
 			string answer = hist_conver[i].answer;
@@ -372,13 +392,21 @@ RESPONSEOBJ CHATGPT_API::Text(const char* prompt)
 		model.c_str(), prompt);
 	STDSTR str = data.data();
 
+	CHATGPT_RESULT r;
+
 	STDSTR hRESPONSE = REST(APIKEY, json_data);
+	
+	if (hRESPONSE == NETWORK_DISCONNECTED)
+	{
+		r.isvalid = false;
+		r.t = "HANG FOREVER";
+		return r;
+	}
 
 	try
 	{
 		JSONOBJECT jObject;
 		jObject.parse(hRESPONSE.data());
-		CHATGPT_RESULT r;
 		r.o = jObject;
 
 		if (jObject.has<JSONOBJECT>("error")){
